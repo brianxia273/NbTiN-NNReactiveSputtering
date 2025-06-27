@@ -12,14 +12,15 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, explained_v
 import os
 
 # Select size, dataset, output, and randomState from config
-data = os.path.join("Datasets", config.p1Data)
+data = config.p1Data
 randomState = config.p1RandomState
+outputCols = config.p0OutputCols
+output = config.p1Output
 
 # Selecting dataset columns
-df = pd.read_csv(data)
-x = df.iloc[:, :-1].values
-# Selecting output
-y = df.iloc[:, -1].values
+df = pd.read_csv(os.path.join("Datasets", data))
+x = df.drop(columns=outputCols).values
+y = df[output].values  # Selecting output
 
 # 80% data to train, 20% leave for testing.
 trainSize = int(0.8 * len(x))
@@ -70,7 +71,7 @@ sns.scatterplot(x=yTest, y=yPredict, color="blue", s=50, edgecolor='black', alph
 min_val = min(min(yTest), min(yPredict))
 max_val = max(max(yTest), max(yPredict))
 plt.plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label="Perfect Fit (y = x)")
-plt.title("SVR Model - Critical Temperature", fontsize=16)
+plt.title(f"SVR Model - {data} - {output}", fontsize=16)
 plt.xlabel("Measurements", fontsize=14)
 plt.ylabel("SVR Predictions", fontsize=14)
 plt.legend()

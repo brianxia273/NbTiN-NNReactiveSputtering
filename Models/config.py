@@ -1,4 +1,9 @@
 # Configuration file to define parameters for NN and regression model development
+# ================================================================================
+# ================================================================================
+# Phase 0: Custom Dataset configurations
+# If output columns change for current dataset
+p0OutputCols: list[str] = ["Critical Temperature"]
 
 # ================================================================================
 # ================================================================================
@@ -7,6 +12,7 @@
 # NOTE: NEED TO SELF-MODIFY HYPERPARAMETERS FOR GPR AND SVR IN WriteMetrics AND DataGenerate
 p1Data: str = "CritTemp HiPIMS.csv"
 p1RandomState: int = 50
+p1Output: str = p0OutputCols[0]
 
 p1SvrExtrapolationRange: float = 0.03
 p1N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
@@ -94,5 +100,6 @@ p5RandomState: int = 50
 # ================================================================================
 
 # AVAILABLE DATASETS:
-# CritTemp.csv
-# CritTemp HiPIMS.csv
+# "CritTemp.csv" | ["Critical Temperature"]
+# "CritTemp HiPIMS.csv" | ["Critical Temperature"]
+

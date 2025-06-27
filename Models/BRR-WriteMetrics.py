@@ -10,28 +10,29 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, explained_variance_score
 
 # Select dataset, output, and randomState from config
-data = os.path.join("Datasets", config.p1Data)
+data = config.p1Data
 randomState = config.p1RandomState
 model = "BRR"
+outputCols = config.p0OutputCols
+output = config.p1Output
 
 # Automating file creation
-output = "Critical Temperature"
-
-directory = os.path.join("Regression Model Data and Metrics", output, model)
+directory = os.path.join("Regression Model Data and Metrics", data, output, model)
 os.makedirs(directory, exist_ok=True)
+
 with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 19} Metric Iteration Evaluation.txt"), "w") as f:
     f.write("MSE, RMSE, MAPE, EV, and R^2 Metrics\n")
     f.write(f"Current Model Dataset: {data}\n")
     f.write(f"Output Variable: {output}\n")
     f.write("=" * 50 + "\n")
     for rs in range(randomState, randomState + 20):
-        df = pd.read_csv(data)
-        x = df.iloc[:, :-1].values
-        y = df.iloc[:, -1].values  # Selecting output
+        df = pd.read_csv(os.path.join("Datasets", data))
+        x = df.drop(columns=outputCols).values
+        y = df[output].values  # Selecting output
 
         # 80% data to train, 20% leave for testing. random_state is set in config
         trainSize = int(0.8 * len(x))
-        xTrain, xTest, yTrain, yTest = train_test_split(x, y, train_size=trainSize, random_state=randomState)
+        xTrain, xTest, yTrain, yTest = train_test_split(x, y, train_size=trainSize, random_state=rs)
 
         # Scaling data
         xTrainLog = np.log1p(xTrain)
