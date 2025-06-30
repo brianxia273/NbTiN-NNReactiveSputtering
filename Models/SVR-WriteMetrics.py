@@ -16,7 +16,6 @@ randomState = config.p1RandomState
 model = "SVR"
 outputCols = config.p0OutputCols
 output = config.p1Output
-
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)
 os.makedirs(directory, exist_ok=True)
 with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 19} Metric Iteration Evaluation.txt"), "w") as f:
@@ -41,7 +40,7 @@ with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 
         xTestScaled = dataScaler.transform(xTestLog)
 
         # Init SVR model
-        svr = SVR(kernel='rbf', C=.1, epsilon=0.05, gamma='scale')  # ADJUST HYPERPARAMETERS
+        svr = SVR(kernel='rbf', C=1, epsilon=0.01, gamma='scale')  # ADJUST HYPERPARAMETERS
         svr.fit(xTrainScaled, yTrain)
 
         # Initial predictions
