@@ -51,13 +51,18 @@ param_grid = {
     "normalize_y": [True],
     "optimizer": ["fmin_l_bfgs_b"],
 }
-gridSearch = GridSearchCV(GaussianProcessRegressor(), param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
+gridSearch = GridSearchCV(GaussianProcessRegressor(), param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)  # Optimizing with MSE
 gridSearch.fit(xTrainScaled, yTrain)
 print("Best GPR Parameters:", gridSearch.best_params_)
 bestGPR = gridSearch.best_estimator_
 trainScore = bestGPR.score(xTrainScaled, yTrain)
-print("Train Set Score (R^2):", trainScore)
 testScore = bestGPR.score(xTestScaled, yTest)
+yTrainPredict = bestGPR.predict(xTrainScaled)
+trainMSE = mean_squared_error(yTrain, yTrainPredict)
+trainRMSE = np.sqrt(trainMSE)
+print("Train Set MSE:", trainMSE)
+print("Train Set RMSE:", trainRMSE)
+print("Train Set Score (R^2):", trainScore)
 print("Test Set Score (R^2):", testScore)
 
 # GPR model making predictions

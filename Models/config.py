@@ -15,9 +15,9 @@ p0OutputCols: list[str] = ["Critical Temperature"]
 
 # Phase 1: WriteMetrics, DataGenerate, and GridSearch Configuration
 # NOTE: NEED TO SELF-MODIFY HYPERPARAMETERS FOR GPR AND SVR IN WriteMetrics AND DataGenerate
-p1Data: str = p0Datasets[0]
-p1RandomState: int = 50
+p1Data: str = p0Datasets[1]
 p1Output: str = p0OutputCols[0]
+p1RandomState: int = 53
 
 p1SvrExtrapolationRange: float = 0.03
 p1N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}

@@ -40,13 +40,18 @@ paramGrid = {
     'gamma': ['scale', 'auto', 0.01, 0.1, 1, 10, 100, ],
     'epsilon': [0.00009, 0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.5]
 }
-gridSearch = GridSearchCV(SVR(), paramGrid, cv=5, scoring='r2', n_jobs=-1)
+gridSearch = GridSearchCV(SVR(), paramGrid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1) # Optimizing with MSE
 gridSearch.fit(xTrainScaled, yTrain)
 print("Best SVR Parameters:", gridSearch.best_params_)
 bestSVR = gridSearch.best_estimator_
 trainScore = bestSVR.score(xTrainScaled, yTrain)
-print("Train Set Score (R^2):", trainScore)
 testScore = bestSVR.score(xTestScaled, yTest)
+yTrainPredict = bestSVR.predict(xTrainScaled)
+trainMSE = mean_squared_error(yTrain, yTrainPredict)
+trainRMSE = np.sqrt(trainMSE)
+print("Train Set MSE:", trainMSE)
+print("Train Set RMSE:", trainRMSE)
+print("Train Set Score (R^2):", trainScore)
 print("Test Set Score (R^2):", testScore)
 
 # SVR model making predictions
