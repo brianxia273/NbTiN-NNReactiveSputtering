@@ -17,28 +17,27 @@ metaBatchSize = config.p3MetaBatchSize
 metaTasks = config.p3MetaTasks
 metaEpochs = config.p3MetaEpochs
 
-nnSize = config.p3NNSize
 nnEpoch = config.p3NNEpoch
 nnBatch = config.p3NNBatch
 nn = config.p3NN
 
-adSize = config.p3Size
-adData = os.path.join("Datasets", config.p3Data)
-adYIndex = config.p3YIndex
+adData = config.p3Data
 augmentedDataCount = config.p3N
 randomState = config.p3RandomState
+output = config.p3Output
 
 seed = config.p3seed
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
-output = "Film Thickness" if adYIndex == -2 else "NTi"
-datasetModels = "Dataset 1 Models" if "Dataset 1" in adData else "Dataset 2 Models"
+if config.p3EnableCPULimit:
+    tf.config.threading.set_intra_op_parallelism_threads(config.p3IntraOPThreads)
+    tf.config.threading.set_inter_op_parallelism_threads(config.p3InterOPThreads)
 
 # Load and normalize 3 augmented datasets
 
 # SVR
-svrDataDirectory = os.path.join("Regression Model Data and Metrics", datasetModels, output, "SVR", f"SVR MetaTrain N_{augmentedDataCount} Size_{adSize} Random_{randomState} Augmented Data.csv")
+svrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "SVR", f"SVR MetaTrain N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 svrAugData = pd.read_csv(svrDataDirectory)
 svrX = svrAugData.iloc[:, :-1].values
 svrY = svrAugData.iloc[:, -1].values # Always 1 output col in aug data
@@ -47,7 +46,7 @@ svrXLog = np.log1p(svrX)
 svrXScaled = svrDataScaler.fit_transform(svrXLog)
 
 # BRR
-brrDataDirectory = os.path.join("Regression Model Data and Metrics", datasetModels, output, "BRR", f"BRR N_{augmentedDataCount} Size_{adSize} Random_{randomState} Augmented Data.csv")
+brrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "BRR", f"BRR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 brrAugData = pd.read_csv(brrDataDirectory)
 brrX = brrAugData.iloc[:, :-1].values
 brrY = brrAugData.iloc[:, -1].values
@@ -56,7 +55,7 @@ brrXLog = np.log1p(brrX)
 brrXScaled = brrDataScaler.fit_transform(brrXLog)
 
 # GPR
-gprDataDirectory = os.path.join("Regression Model Data and Metrics", datasetModels, output, "GPR", f"GPR N_{augmentedDataCount} Size_{adSize} Random_{randomState} Augmented Data.csv")
+gprDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "GPR", f"GPR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 gprAugData = pd.read_csv(gprDataDirectory)
 gprX = gprAugData.iloc[:, :-1].values
 gprY = gprAugData.iloc[:, -1].values
@@ -65,12 +64,12 @@ gprXLog = np.log1p(gprX)
 gprXScaled = gprDataScaler.fit_transform(gprXLog)
 
 # Load pre-trained neural network, set optimizer
-nnModelPath = os.path.join("Pre-Trained Neural Networks", nn, datasetModels, output,
-                           f"Pre-Trained {nn} - N_{augmentedDataCount} Size_{adSize} Epoch_{nnEpoch} Batch_{nnBatch}.keras")
+nnModelPath = os.path.join("Pre-Trained Neural Networks", nn, adData, output,
+                           f"Pre-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch}.keras")
 nnModel = load_model(nnModelPath)
 optimizer = Adam(learning_rate=innerStepSize)
 
-trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Size_{adSize} Epoch_{nnEpoch} Batch_{nnBatch}.keras"
+trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch}.keras"
 print("Training " + trainedModelName + f", randomState {randomState}")
 
 # Meta-Iteration Loop
@@ -104,27 +103,12 @@ for metaIter in range(metaTasks):
     nnModel.set_weights(newWeights)
     # Logging loss every 100 iterations
     # if metaIter % 100 == 0:
-    print(f"Meta-iteration {metaIter}: Loss = {np.mean(lmseLoss.numpy()):.6f}")
+    print(f"Meta-iteration {metaIter}: Loss = {tf.reduce_mean(lmseLoss).numpy():.10f}")
 
 # Save trained model
-modelDirectory = os.path.join("Meta-Trained Neural Networks", nn, datasetModels, output)
+modelDirectory = os.path.join("Meta-Trained Neural Networks", nn, adData, output)
 os.makedirs(modelDirectory, exist_ok=True)
 nnModel.save(os.path.join(modelDirectory, trainedModelName))
 print("Saved " + os.path.join(modelDirectory, trainedModelName) + "!")
 
 # Visualize results - to be added
-
-# ================================================================================
-# Extra reference code
-# ================================================================================
-
-# Auto-adjusting outer learning rate/step size that makes sure updates start big and get smaller over time
-# fractionDone = metaIter / metaTasks
-#     currentMetaStepSize = (1 - fractionDone) * metaStepSize
-
-# # Saving Data Scaler
-# scalerDirectory = os.path.join("Data Scalers", nn, datasetModels, output)
-# os.makedirs(scalerDirectory, exist_ok=True)
-# scalerName = f"Meta-Trained {nn} - N_{augmentedDataCount} Size_{adSize} Epoch_{nnEpoch} Batch_{nnBatch} DataScaler.pkl"
-# joblib.dump(dataScaler, os.path.join(scalerDirectory, scalerName))
-# print("Saved " + os.path.join(scalerDirectory, scalerName) + "!")
