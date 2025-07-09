@@ -26,10 +26,10 @@ p1N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
 # ================================================================================
 
 # Phase 2: FCNN/1D-Conv PreTrain Configuration
-p2Size: int = 5
 p2Data: str = p0Datasets[0]
+p2Output : str = p0OutputCols[0]
 p2RandomState: int = 50  # Selecting randomState of SVG augmented data
-p2YIndex: int = -1  # (-2) = film-thickness, (-1) = N/Ti ratio
+
 p2LearningRate: float = 0.2  # NEED TO DOUBLE-CHECK
 p2BatchSize: int = 1028  # {16, 512, 1028}
 p2Epochs: int = 1000  # {20, 200, 1000}
