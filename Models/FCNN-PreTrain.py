@@ -14,16 +14,16 @@ import config
 import os
 
 # Select size, dataset, output, randomState, data, epochs, and batch size from config
-setSize = config.p2Size
-yIndex = config.p2YIndex
+data = config.p2Data
 randomState = config.p2RandomState
-data = os.path.join("Datasets", config.p2Data)
 model = "SVR"
+
+output = config.p2Output
+
 epochs = config.p2Epochs
 batchSize = config.p2BatchSize
 learningRate = config.p2LearningRate
 augmentedDataCount = config.p2N
-
 
 def constructModelLayers():
     model = Sequential()
@@ -56,8 +56,9 @@ output = "Film Thickness" if yIndex == -2 else "NTi"
 augDataDirectory = os.path.join("Regression Model Data and Metrics", datasetModels, output, model,
                                 f"{model} PreTrain N_{augmentedDataCount} Size_{setSize} Random_{randomState} Augmented Data.csv")
 augmentedData = pd.read_csv(augDataDirectory)
-x = augmentedData.iloc[:, :-1].values
-y = augmentedData.iloc[:, -1].values
+x = augmentedData.drop(columns=augmentedData.columns[-1]).values
+y = augmentedData[augmentedData.columns[-1]].values  # Selecting output
+
 
 # Normalize data
 dataScaler = MinMaxScaler(feature_range=(-1, 1))
