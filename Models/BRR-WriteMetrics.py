@@ -7,7 +7,7 @@ import config
 from sklearn.linear_model import BayesianRidge
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error, explained_variance_score
+from sklearn.metrics import mean_squared_error, explained_variance_score, mean_absolute_percentage_error
 
 # Select dataset, output, and randomState from config
 data = config.p1Data
@@ -20,7 +20,8 @@ output = config.p1Output
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)
 os.makedirs(directory, exist_ok=True)
 
-with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 19} Metric Iteration Evaluation.txt"), "w") as f:
+with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 19} Metric Iteration Evaluation.txt"),
+          "w") as f:
     f.write("MSE, RMSE, MAPE, EV, and R^2 Metrics\n")
     f.write(f"Current Model Dataset: {data}\n")
     f.write(f"Output Variable: {output}\n")
@@ -49,7 +50,7 @@ with open(os.path.join(directory, f"{model} Random_{randomState}_{randomState + 
         yPredict = brr.predict(xTestScaled)
         mseCurrent = mean_squared_error(yTest, yPredict)
         rmseCurrent = np.sqrt(mseCurrent)
-        mapeCurrent = np.mean(np.abs((yTest - yPredict) / yTest))
+        mapeCurrent = mean_absolute_percentage_error(yTest, yPredict)
         evCurrent = explained_variance_score(yTest, yPredict)
         currentModelScore = brr.score(xTestScaled, yTest)
 

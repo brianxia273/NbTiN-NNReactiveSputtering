@@ -17,7 +17,7 @@ p0OutputCols: list[str] = ["Critical Temperature"]
 # NOTE: NEED TO SELF-MODIFY HYPERPARAMETERS FOR GPR AND SVR IN WriteMetrics AND DataGenerate
 p1Data: str = p0Datasets[1]
 p1Output: str = p0OutputCols[0]
-p1RandomState: int = 53
+p1RandomState: int = 82
 
 p1SvrExtrapolationRange: float = 0.03
 p1N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
@@ -26,11 +26,10 @@ p1N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
 # ================================================================================
 
 # Phase 2: FCNN/1D-Conv PreTrain Configuration
-p2Size: int = 5
-p2Data: str = p0Datasets[0]
-p2RandomState: int = 50  # Selecting randomState of SVG augmented data
-p2YIndex: int = -1  # (-2) = film-thickness, (-1) = N/Ti ratio
-p2LearningRate: float = 0.2  # NEED TO DOUBLE-CHECK
+p2Data: str = p0Datasets[1]
+p2Output: str = p0OutputCols[0]
+p2RandomState: int = 82  # Also selects randomState of SVG augmented data
+p2LearningRate: float = 0.002  # NEED TO DOUBLE-CHECK
 p2BatchSize: int = 1028  # {16, 512, 1028}
 p2Epochs: int = 1000  # {20, 200, 1000}
 p2N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
@@ -39,69 +38,68 @@ p2N: int = 25600  # N = Augmented Data Count, {6400, 12800, 25600}
 # ================================================================================
 
 # Phase 3: NN MetaTrain Configuration
-p3MetaStepSize: float = 0.2  # {0.05, 0.2}
+p3MetaStepSize: float = 0.05  # {0.05, 0.2}
 p3MetaEpochs: int = 200  # {5, 10, 100, 200}
 p3MetaTasks: int = 2000  # {50, 100, 1000, 2000}
 p3MetaBatchSize: int = 20  # {5, 20}
 p3InnerStepSize: float = 0.05  # NEED TO DOUBLE-CHECK
 
 # Choosing Pre-Trained NN using its parameters
-p3NN: str = "FCNN" # 1D-Conv or FCNN
+p3NN: str = "FCNN"  # 1D-Conv or FCNN
 p3NNEpoch: int = 1000  # {20, 200, 1000}
 p3NNBatch: int = 1028  # {16, 512, 1028}
 
 # Selecting Augmented Data parameters
-p3Data: str = p0Datasets[0]
+p3Data: str = p0Datasets[1]
 p3Output: str = p0OutputCols[0]
 p3N: int = 25600  # N {6400, 12800, 25600}
 
 # Choose randomStates of datasets to select from. Must be consistent with SVR, BRR, and GPR randomState
-p3RandomState: int = 50
+p3RandomState: int = 55
 
 # Seed to control np and tf RNG; change as needed, but currently is not kept track of
 p3seed: int = 42
 
 # (Optional) Configuring CPU core usage
-p3EnableCPULimit: bool = False # When True, limits CPU threads based on settings below
+p3EnableCPULimit: bool = False  # When True, limits CPU threads based on settings below
 p3IntraOPThreads: int = 8
 p3InterOPThreads: int = 4
 
 # ================================================================================
 # ================================================================================
 
-# Phase 4: NN FineTune Configuration
+# Phase 4: FCNN, 1D-Conv FineTune Configuration
 
-p4LearningRate: float = 0.2  # {0.05, 0.2} - Is same as MetaLearn (?)
-p4Epochs: int = 200  # {5, 10, 100, 200} - Is same as MetaLearn (?)
+p4LearningRate: float = 0.05  # {0.05, 0.2} - Is same as MetaLearn (?)
+p4Epochs: int = 1000  # {5, 10, 100, 200} - Is same as MetaLearn (?)
+p4Data: str = p0Datasets[1]
 p4Output: str = p0OutputCols[0]
-p4Data: str = p0Datasets[0]
-p4BatchSize: int = 1028 # {16, 512, 1028} (?)
+p4BatchSize: int = 1028  # {16, 512, 1028} (?)
 
 # Choosing Meta-Trained NN using its parameters
-p4NN: str = "1D-Conv" # 1D-Conv or FCNN
 p4NNEpoch: int = 1000  # {20, 200, 1000}
 p4NNBatch: int = 1028  # {16, 512, 1028}
 p4N: int = 25600  # N {6400, 12800, 25600}
 
 # Choosing randomState for train/test, must be same as previous phases
-p4RandomState: int = 50
+p4RandomState: int = 55
 
 # ================================================================================
 # ================================================================================
 
 # Phase 5: Neural Network TestAccuracy Configuration
 
-p5Data: str = p0Datasets[0]
+p5Data: str = p0Datasets[1]
 p5Output: str = p0OutputCols[0]
 
 # Choosing Fine-Tuned NN using its parameters
-p5NN: str = "FCNN" # 1D-Conv or FCNN
+p5NN: str = "FCNN"  # 1D-Conv or FCNN
 p5N: int = 25600  # N {6400, 12800, 25600}
 p5NNEpoch: int = 1000  # {5, 10, 100, 200}
 p5NNBatch: int = 1028  # {16, 512, 1028}
 
 # Choosing randomState for same train/test, must be same as previous phases
-p5RandomState: int = 50
+p5RandomState: int = 55
 
 # ================================================================================
 # ================================================================================
@@ -109,4 +107,3 @@ p5RandomState: int = 50
 # AVAILABLE DATASETS:
 # "CritTemp.csv" | ["Critical Temperature"]
 # "CritTemp HiPIMS.csv" | ["Critical Temperature"]
-
