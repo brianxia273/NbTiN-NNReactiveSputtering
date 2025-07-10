@@ -4,7 +4,7 @@ from tensorflow.keras.models import load_model
 import pandas as pd
 import config
 import os
-from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score
+from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score, mean_absolute_percentage_error
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import joblib
@@ -20,8 +20,8 @@ output = config.p5Output
 outputCols = config.p0OutputCols
 
 # Import NN
-mlModelPath = os.path.join("Fine-Tuned Neural Networks", nn, data, output,
-                           f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch}.keras")
+mlModelPath = os.path.join("Fine-Tuned Neural Networks", data, output, nn,
+                           f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState}.keras")
 mlModel = load_model(mlModelPath)
 
 # Import Real Data CSV file
@@ -34,16 +34,16 @@ trainSize = int(0.8 * len(x))
 xTrain, xTest, yTrain, yTest = train_test_split(x, y, train_size=trainSize, random_state=randomState)
 
 # Normalize data, ignore Train
-scalerName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} DataScaler.pkl"
-dataScaler = joblib.load(os.path.join("Data Scalers", nn, data, output, scalerName))
-xTestLog= np.log1p(xTest)
+scalerName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState} DataScaler.pkl"
+dataScaler = joblib.load(os.path.join("Data Scalers", data, output, nn, scalerName))
+xTestLog = np.log1p(xTest)
 xTestScaled = dataScaler.transform(xTestLog)
 
 # Check predictions
 yPredict = mlModel.predict(xTestScaled)
 mse = mean_squared_error(yTest, yPredict)
 rmse = np.sqrt(mse)
-mape = np.mean(np.abs((yTest - yPredict) / yTest))
+mape = mean_absolute_percentage_error(yTest, yPredict)
 ev = explained_variance_score(yTest, yPredict)
 r2 = r2_score(yTest, yPredict)
 

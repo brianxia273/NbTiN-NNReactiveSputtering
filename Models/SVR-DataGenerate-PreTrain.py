@@ -54,7 +54,6 @@ xAugmentedLog = np.log1p(xAugmented)
 xAugmentedScaled = dataScaler.transform(xAugmentedLog)
 yAugmented = svr.predict(xAugmentedScaled)
 
-
 # Saving Augmented Data
 inputColNames = df.drop(columns=outputCols).columns.tolist()
 allColNames = inputColNames + [output]

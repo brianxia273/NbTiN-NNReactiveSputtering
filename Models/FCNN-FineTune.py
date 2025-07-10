@@ -10,9 +10,8 @@ import config
 import os
 import joblib
 
-
 # Select from config
-nn = config.p4NN
+nn = "FCNN"
 output = config.p4Output
 data = config.p4Data
 nnEpochs = config.p4NNEpoch
@@ -25,8 +24,8 @@ randomState = config.p4RandomState
 outputCols = config.p0OutputCols
 
 # Import NN
-mlModelPath = os.path.join("Meta-Trained Neural Networks", nn, data, output,
-                           f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpochs} Batch_{nnBatch}.keras")
+mlModelPath = os.path.join("Meta-Trained Neural Networks", data, output, nn,
+                           f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpochs} Batch_{nnBatch} Random_{randomState}.keras")
 mlModel = load_model(mlModelPath)
 mlModel.compile(optimizer=Adam(learning_rate=learningRate), loss='mse')
 
@@ -47,21 +46,22 @@ xTestLog = np.log1p(xTest)
 xTestScaled = dataScaler.transform(xTestLog)
 
 # Save Data Scaler
-scalerDirectory = os.path.join("Data Scalers", nn, data, output)
+scalerDirectory = os.path.join("Data Scalers", data, output, nn)
 os.makedirs(scalerDirectory, exist_ok=True)
-scalerName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} DataScaler.pkl"
+scalerName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState} DataScaler.pkl"
 joblib.dump(dataScaler, os.path.join(scalerDirectory, scalerName))
 print("Saved " + os.path.join(scalerDirectory, scalerName) + "!")
 
 # Fine-Tune NN
-history = mlModel.fit(xTrainScaled, yTrain, epochs=epochs, batch_size=batchSize, verbose=1, validation_data=(xTestScaled, yTest))
+history = mlModel.fit(xTrainScaled, yTrain, epochs=epochs, batch_size=batchSize, verbose=1,
+                      validation_data=(xTestScaled, yTest))
 
 # Print complete history
 # print("Training Loss:", history.history['loss'])
 
 # Save Fine-Tuned NN
-directory = os.path.join("Fine-Tuned Neural Networks", nn, data, output)
+directory = os.path.join("Fine-Tuned Neural Networks", data, output, nn)
 os.makedirs(directory, exist_ok=True)
-modelName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize}.keras"
+modelName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState}.keras"
 mlModel.save(os.path.join(directory, modelName))
 print("Saved " + os.path.join(directory, modelName) + "!")

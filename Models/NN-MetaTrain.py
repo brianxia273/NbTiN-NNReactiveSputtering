@@ -9,6 +9,7 @@ from tensorflow.keras.losses import MeanSquaredError
 import pandas as pd
 import config
 import os
+import time
 
 # Select hyperparameters from config
 innerStepSize = config.p3InnerStepSize
@@ -35,18 +36,19 @@ if config.p3EnableCPULimit:
     tf.config.threading.set_inter_op_parallelism_threads(config.p3InterOPThreads)
 
 # Load and normalize 3 augmented datasets
-
 # SVR
-svrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "SVR", f"SVR MetaTrain N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
+svrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "SVR",
+                                f"SVR MetaTrain N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 svrAugData = pd.read_csv(svrDataDirectory)
 svrX = svrAugData.iloc[:, :-1].values
-svrY = svrAugData.iloc[:, -1].values # Always 1 output col in aug data
+svrY = svrAugData.iloc[:, -1].values  # Always 1 output col in aug data
 svrDataScaler = MinMaxScaler(feature_range=(-1, 1))
 svrXLog = np.log1p(svrX)
 svrXScaled = svrDataScaler.fit_transform(svrXLog)
 
 # BRR
-brrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "BRR", f"BRR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
+brrDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "BRR",
+                                f"BRR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 brrAugData = pd.read_csv(brrDataDirectory)
 brrX = brrAugData.iloc[:, :-1].values
 brrY = brrAugData.iloc[:, -1].values
@@ -55,7 +57,8 @@ brrXLog = np.log1p(brrX)
 brrXScaled = brrDataScaler.fit_transform(brrXLog)
 
 # GPR
-gprDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "GPR", f"GPR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
+gprDataDirectory = os.path.join("Regression Model Data and Metrics", adData, output, "GPR",
+                                f"GPR N_{augmentedDataCount} Random_{randomState} Augmented Data.csv")
 gprAugData = pd.read_csv(gprDataDirectory)
 gprX = gprAugData.iloc[:, :-1].values
 gprY = gprAugData.iloc[:, -1].values
@@ -64,13 +67,28 @@ gprXLog = np.log1p(gprX)
 gprXScaled = gprDataScaler.fit_transform(gprXLog)
 
 # Load pre-trained neural network, set optimizer
-nnModelPath = os.path.join("Pre-Trained Neural Networks", nn, adData, output,
-                           f"Pre-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch}.keras")
+nnModelPath = os.path.join("Pre-Trained Neural Networks", adData, output, nn,
+                           f"Pre-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState}.keras")
 nnModel = load_model(nnModelPath)
 optimizer = Adam(learning_rate=innerStepSize)
+mse = MeanSquaredError()
 
-trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch}.keras"
-print("Training " + trainedModelName + f", randomState {randomState}")
+trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState}.keras"
+print("Training " + trainedModelName)
+startTime = time.time()
+
+@tf.function
+def innerLoop(xTensor, yTensor):
+    # Record MSE computations, to later compute gradients/derivatives
+    with tf.GradientTape() as tape:
+        # Calculate LMSE of predicted and actual output
+        predictions = nnModel(xTensor)
+        lmseLoss = mse(yTensor, predictions)
+        # Compute gradients/derivatives of MSE equation, tells us direction/magnitude to minimize loss. Multiply by loss function, add onto weight
+    gradients = tape.gradient(lmseLoss, nnModel.trainable_weights)
+    # Pair gradients and trainable weights, updates weights of NN by adding (innerLearningRate)*(gradients) to weights
+    optimizer.apply_gradients(zip(gradients, nnModel.trainable_weights))
+    return lmseLoss
 
 # Meta-Iteration Loop
 for metaIter in range(metaTasks):
@@ -84,31 +102,27 @@ for metaIter in range(metaTasks):
     miniBatchIndices = np.random.choice(len(xScaled), metaBatchSize, replace=False)
     xBatchScaled = xScaled[miniBatchIndices]
     yBatch = y[miniBatchIndices]
-    mse = MeanSquaredError()
+    lmseLoss = None
     # Inner Loop Training
+    xTensor, yTensor = tf.convert_to_tensor(xBatchScaled, dtype=tf.float32), tf.convert_to_tensor(yBatch, dtype=tf.float32)
     for _ in range(metaEpochs):
-        # Record MSE computations, to later compute gradients/derivatives
-        with tf.GradientTape() as tape:
-            # Calculate LMSE of predicted and actual output
-            predictions = nnModel(xBatchScaled)
-            lmseLoss = mse(yBatch, predictions)
-        # Compute gradients/derivatives of MSE equation, tells us direction/magnitude to minimize loss. Multiply by loss function, add onto weight
-        gradients = tape.gradient(lmseLoss, nnModel.trainable_weights)
-        # Pair gradients and trainable weights, updates weights of NN by adding (innerLearningRate)*(gradients) to weights
-        optimizer.apply_gradients(zip(gradients, nnModel.trainable_weights))
+        lmseLoss = innerLoop(xTensor, yTensor)
     # Apply Meta-Update
     newWeights = nnModel.get_weights()
-    for var in range(len(newWeights)):
-        newWeights[var] = oldWeights[var] + ((newWeights[var] - oldWeights[var]) * metaStepSize)
-    nnModel.set_weights(newWeights)
+    metaUpdatedWeights = [
+        old + metaStepSize * (new - old)
+        for old, new in zip(oldWeights, newWeights)
+    ]
+    nnModel.set_weights(metaUpdatedWeights)
     # Logging loss every 100 iterations
     # if metaIter % 100 == 0:
     print(f"Meta-iteration {metaIter}: Loss = {tf.reduce_mean(lmseLoss).numpy():.10f}")
 
 # Save trained model
-modelDirectory = os.path.join("Meta-Trained Neural Networks", nn, adData, output)
+modelDirectory = os.path.join("Meta-Trained Neural Networks", adData, output, nn)
 os.makedirs(modelDirectory, exist_ok=True)
 nnModel.save(os.path.join(modelDirectory, trainedModelName))
 print("Saved " + os.path.join(modelDirectory, trainedModelName) + "!")
-
+endTime = time.time()
+print(f"Time Elapsed: {endTime - startTime} seconds")
 # Visualize results - to be added

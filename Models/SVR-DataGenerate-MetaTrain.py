@@ -50,7 +50,7 @@ yAugmented = svr.predict(xAugmentedScaled)
 inputColNames = df.drop(columns=outputCols).columns.tolist()
 allColNames = inputColNames + [output]
 dfCSV = pd.DataFrame(np.column_stack((xAugmented, yAugmented)), columns=allColNames)
-csvName = f"{model} MetaTrain N_{augmentedDataCount}  Random_{randomState} Augmented Data.csv"
+csvName = f"{model} MetaTrain N_{augmentedDataCount} Random_{randomState} Augmented Data.csv"
 saveDirectory = os.path.join(directory, csvName)
 dfCSV.to_csv(saveDirectory, index=False)
 
