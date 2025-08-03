@@ -2,8 +2,6 @@
 import numpy as np
 from tensorflow.keras.models import load_model
 import pandas as pd
-from tensorflow.python.keras.saving.save import load_model
-
 import config
 import os
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score, mean_absolute_percentage_error
@@ -31,12 +29,16 @@ nnBatch = config.p5NNBatch
 augmentedDataCount = config.p5N
 output = config.p5Output
 outputCols = config.p0OutputCols
+ensembleRandomSeed = config.p5EnsembleRandom
+
+# Set np randomSeed
+np.random.seed(ensembleRandomSeed)
 
 # Import all NNs
 ensemble = "" # Make script to compile models into ensemble folder
 ensembleScalers = ""
-modelPath = os.path.join("Fine-Tuned Neural Networks", data, output, nn, ensemble)
-scalerPath = os.path.join("Data Scalers", data, output, nn, ensembleScalers)
+modelPath = os.path.join("../Fine-Tuned Neural Networks", data, output, nn, ensemble)
+scalerPath = os.path.join("../Data Scalers", data, output, nn, ensembleScalers)
 
 models = [f for f in os.listdir(modelPath) if f.endswith('.keras')]
 scalers = [f for f in os.listdir(scalerPath) if f.endswith('.pkl')]
@@ -51,7 +53,7 @@ for file in scalers:
     stateMap[state].append(file)
 
 # Import Real Data CSV file
-df = pd.read_csv(os.path.join("Datasets", data))
+df = pd.read_csv(os.path.join("../Datasets", data))
 x = df.drop(columns=outputCols).values
 y = df[output].values  # Selecting output
 

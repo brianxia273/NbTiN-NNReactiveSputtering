@@ -1,12 +1,13 @@
 # Fine-tuning Neural Network Model after Meta-Learning
 
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import pandas as pd
-import config
+import config, roundConfig
 import os
 import joblib
 
@@ -22,10 +23,17 @@ learningRate = config.p4LearningRate
 augmentedDataCount = config.p4N
 randomState = config.p4RandomState
 outputCols = config.p0OutputCols
+ensembleRandomSeed = config.p4EnsembleRandom
+
+# Set np and tf randomSeed
+np.random.seed(ensembleRandomSeed)
+tf.random.set_seed(ensembleRandomSeed)
+
+mRound = roundConfig.mRound
 
 # Import NN
 mlModelPath = os.path.join("Meta-Trained Neural Networks", data, output, nn,
-                           f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpochs} Batch_{nnBatch} Random_{randomState}.keras")
+                           f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpochs} Batch_{nnBatch} Random_{randomState} Round_{mRound}.keras")
 mlModel = load_model(mlModelPath)
 mlModel.compile(optimizer=Adam(learning_rate=learningRate), loss='mse')
 
@@ -62,6 +70,6 @@ history = mlModel.fit(xTrainScaled, yTrain, epochs=epochs, batch_size=batchSize,
 # Save Fine-Tuned NN
 directory = os.path.join("Fine-Tuned Neural Networks", data, output, nn)
 os.makedirs(directory, exist_ok=True)
-modelName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState}.keras"
+modelName = f"Fine-Tuned {nn} - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState} Round_{mRound}.keras"
 mlModel.save(os.path.join(directory, modelName))
 print("Saved " + os.path.join(directory, modelName) + "!")

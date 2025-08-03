@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
 from tensorflow.keras.losses import MeanSquaredError
 import pandas as pd
-import config
+import config, roundConfig
 import os
 import time
 
@@ -20,16 +20,23 @@ metaEpochs = config.p3MetaEpochs
 
 nnEpoch = config.p3NNEpoch
 nnBatch = config.p3NNBatch
-nn = config.p3NN
+nn = "FCNN"
 
 adData = config.p3Data
 augmentedDataCount = config.p3N
 randomState = config.p3RandomState
 output = config.p3Output
+ensembleRandomSeed = config.p3EnsembleRandom
+
+# Set np and tf randomSeed
+np.random.seed(ensembleRandomSeed)
+tf.random.set_seed(ensembleRandomSeed)
 
 seed = config.p3seed
-np.random.seed(seed)
-tf.random.set_seed(seed)
+# np.random.seed(seed)
+# tf.random.set_seed(seed)
+
+mRound = roundConfig.mRound
 
 if config.p3EnableCPULimit:
     tf.config.threading.set_intra_op_parallelism_threads(config.p3IntraOPThreads)
@@ -68,12 +75,12 @@ gprXScaled = gprDataScaler.fit_transform(gprXLog)
 
 # Load pre-trained neural network, set optimizer
 nnModelPath = os.path.join("Pre-Trained Neural Networks", adData, output, nn,
-                           f"Pre-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState}.keras")
+                           f"Pre-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState} Round_{mRound}.keras")
 nnModel = load_model(nnModelPath)
 optimizer = Adam(learning_rate=innerStepSize)
 mse = MeanSquaredError()
 
-trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState}.keras"
+trainedModelName = f"Meta-Trained {nn} - N_{augmentedDataCount} Epoch_{nnEpoch} Batch_{nnBatch} Random_{randomState} Round_{mRound}.keras"
 print("Training " + trainedModelName)
 startTime = time.time()
 
@@ -115,8 +122,8 @@ for metaIter in range(metaTasks):
     ]
     nnModel.set_weights(metaUpdatedWeights)
     # Logging loss every 100 iterations
-    # if metaIter % 100 == 0:
-    print(f"Meta-iteration {metaIter}: Loss = {tf.reduce_mean(lmseLoss).numpy():.10f}")
+    if metaIter % 100 == 0:
+        print(f"Meta-iteration {metaIter}: Loss = {tf.reduce_mean(lmseLoss).numpy():.10f}")
 
 # Save trained model
 modelDirectory = os.path.join("Meta-Trained Neural Networks", adData, output, nn)

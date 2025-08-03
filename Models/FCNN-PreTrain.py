@@ -2,6 +2,7 @@
 # Pre-trained on SVR interpolated and extrapolated data
 
 import numpy as np
+import tensorflow as tf
 from keras.src.layers import BatchNormalization, Dropout
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
@@ -10,7 +11,7 @@ from tensorflow.keras.optimizers import Adam
 from keras.initializers import RandomNormal
 from keras.regularizers import l1_l2
 import pandas as pd
-import config
+import config, roundConfig
 import os
 
 # Select size, dataset, output, randomState, data, epochs, and batch size from config
@@ -22,7 +23,11 @@ batchSize = config.p2BatchSize
 learningRate = config.p2LearningRate
 augmentedDataCount = config.p2N
 output = config.p2Output
+ensembleRandomSeed = config.p2EnsembleRandom
 
+# Set np and tf randomSeed
+np.random.seed(ensembleRandomSeed)
+tf.random.set_seed(ensembleRandomSeed)
 
 # Optional parameters from original study; change/specify as needed
 def constructModelLayers(inputDim: int, l1: float = 1e-3, l2: float = 1e-2, drop1: float = 0.1, drop2: float = 0.2,
@@ -45,9 +50,7 @@ def constructModelLayers(inputDim: int, l1: float = 1e-3, l2: float = 1e-2, drop
     inputDim //= 2
 
     # Output Layer
-    model.add(Dense(max(1, inputDim // 2), kernel_initializer=RandomNormal(), kernel_regularizer=l1_l2(l1=l1, l2=l2)))
-    model.add(BatchNormalization())
-    model.add(Activation('linear'))
+    model.add(Dense(max(1, inputDim // 2), kernel_initializer=RandomNormal()))
 
     model.compile(optimizer=Adam(learning_rate=learningRate), loss='mean_squared_error')
     return model
@@ -78,6 +81,7 @@ history = fcnnModel.fit(xScaled, y, epochs=epochs, batch_size=batchSize, verbose
 # Save FCNN
 directory = os.path.join("Pre-Trained Neural Networks", data, output, "FCNN")
 os.makedirs(directory, exist_ok=True)
-modelName = f"Pre-Trained FCNN - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState}.keras"
+mRound = roundConfig.mRound
+modelName = f"Pre-Trained FCNN - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState} Round_{mRound}.keras"
 fcnnModel.save(os.path.join(directory, modelName))
 print("Saved " + os.path.join(directory, modelName) + "!")

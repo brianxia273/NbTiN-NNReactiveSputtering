@@ -2,13 +2,14 @@
 # Pre-trained on SVR interpolated and extrapolated data
 
 import numpy as np
+import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv1D, BatchNormalization, Flatten, Dropout
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.optimizers import Adam
 import pandas as pd
-import config
+import config, roundConfig
 import os
 
 # Select size, dataset, output, randomState, data, epochs, and batch size from config
@@ -20,6 +21,11 @@ batchSize = config.p2BatchSize
 learningRate = config.p2LearningRate
 augmentedDataCount = config.p2N
 output = config.p2Output
+ensembleRandomSeed = config.p2EnsembleRandom
+
+# Set np and tf randomSeed
+np.random.seed(ensembleRandomSeed)
+tf.random.set_seed(ensembleRandomSeed)
 
 def constructModelLayers(inputDim: int, l1: float = 1e-3, l2: float = 1e-2, learningRate: float = 0.002):
     model = Sequential()
@@ -73,6 +79,7 @@ history = convModel.fit(xScaled, y, epochs=epochs, batch_size=batchSize, verbose
 # Save 1D-Conv
 directory = os.path.join("Pre-Trained Neural Networks", data, output, "1D-Conv")
 os.makedirs(directory, exist_ok=True)
-modelName = f"Pre-Trained 1D-Conv - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState}.keras"
+mRound = roundConfig.mRound
+modelName = f"Pre-Trained 1D-Conv - N_{augmentedDataCount} Epoch_{epochs} Batch_{batchSize} Random_{randomState} Round_{mRound}.keras"
 convModel.save(os.path.join(directory, modelName))
 print("Saved " + os.path.join(directory, modelName) + "!")

@@ -17,6 +17,9 @@ data = config.p1Data
 randomState = config.p1RandomState
 outputCols = config.p0OutputCols
 output = config.p1Output
+ensembleRandomSeed = config.p1EnsembleRandom
+
+np.random.seed(ensembleRandomSeed)
 
 # Selecting dataset columns
 df = pd.read_csv(os.path.join("Datasets", data))
