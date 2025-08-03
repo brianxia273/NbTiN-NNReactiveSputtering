@@ -19,6 +19,9 @@ model = "GPR"
 augmentedDataCount = config.p1N
 outputCols = config.p0OutputCols
 output = config.p1Output
+ensembleRandomSeed = config.p1EnsembleRandom
+
+np.random.seed(ensembleRandomSeed)
 
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)
 os.makedirs(directory, exist_ok=True)

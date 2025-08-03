@@ -15,6 +15,10 @@ randomState = config.p1RandomState
 model = "BRR"
 outputCols = config.p0OutputCols
 output = config.p1Output
+ensembleRandomSeed = config.p1EnsembleRandom
+
+# Set np randomSeed
+np.random.seed(ensembleRandomSeed)
 
 # Automating file creation
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)

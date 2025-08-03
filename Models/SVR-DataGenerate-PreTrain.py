@@ -19,6 +19,10 @@ extrapolationRange = config.p1SvrExtrapolationRange
 augmentedDataCount = config.p1N
 outputCols = config.p0OutputCols
 output = config.p1Output
+ensembleRandomSeed = config.p1EnsembleRandom
+
+# Set np randomSeed
+np.random.seed(ensembleRandomSeed)
 
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)
 os.makedirs(directory, exist_ok=True)

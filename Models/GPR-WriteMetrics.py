@@ -17,6 +17,9 @@ randomState = config.p1RandomState
 model = "GPR"
 outputCols = config.p0OutputCols
 output = config.p1Output
+ensembleRandomSeed = config.p1EnsembleRandom
+
+np.random.seed(ensembleRandomSeed)
 
 # Automating file creation
 directory = os.path.join("Regression Model Data and Metrics", data, output, model)
